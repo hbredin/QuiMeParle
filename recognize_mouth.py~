@@ -1,0 +1,42 @@
+#!/usr/bin/python
+import cv
+import cv2
+
+image = cv.LoadImage('round-black.jpg')
+storage = cv.CreateMemStorage()
+classifier_face = "haarcascade_frontalface_alt.xml"
+classifier_mouth = "haarcascade_mcs_mouth.xml"
+
+haar_face = cv.Load(classifier_face)
+haar_mouth = cv.Load(classifier_mouth)
+faces = cv.HaarDetectObjects(image, haar_face, storage, 1.1, 2,cv.CV_HAAR_DO_CANNY_PRUNING)
+
+# S'il y a des visages detectes :
+if faces :
+# Pour chaque visage detecte:
+# x,y : coord debut du rectangle.
+	# neigh : % de "surete"
+	for ((x,y,largeur,hauteur), neigh) in faces:
+# Creation du rectangle pour situer le visage.
+        cv.Rectangle(image,(x,y), (x+largeur,y+hauteur),(255,255,255))
+# On va regarder si on ne decale pas trop le cadre pour cibler la bouche.
+		demi_h = hauteur/2
+		_, image_y = cv.GetSize(image)
+# Si le rectangle sort du bas de l'image, il faudra prendre un rectangle qui s'arrete a la limite de celle ci.if y+3*demi_h > image_y :
+			img_mouth = cv.GetSubRect(image, (x,y+demi_h,largeur, image_y-(y+demi_h)))
+		else :
+			img_mouth = cv.GetSubRect(image, (x,y+demi_h,largeur,hauteur))
+		mouths = cv.HaarDetectObjects(img_mouth, haar_mouth, storage, 1.1, 2,cv.CV_HAAR_DO_CANNY_PRUNING)
+
+# S'il y a des bouches detectees
+if mouths :
+	for ((x,y,l,h), neigh) in mouths:
+		cv.Rectangle(img_mouth, (x,y), (x+l,y+h), (0,0,255))
+
+cv.NamedWindow("Face")
+cv.ShowImage("Face",image)
+
+cv.NamedWindow("Mouth")
+cv.ShowImage("Mouth",img_mouth)
+
+cv.WaitKey(1000000)
