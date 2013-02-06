@@ -13,8 +13,10 @@ def ecrit_position(visage, compteur, x, y, largeur, hauteur) :
 	# Attention : visage = true si on ecrit dans visage_nomDeLaVideo, sinon bouche_nomDeLaVideo.
 	if visage :
 		fichier_visage.write('img n: '+str(compteur)+'; ('+str(x)+','+str(y)+'); '+str(largeur)+'*'+str(hauteur)+'\n')
+		fichier_visage.flush()
 	else :
 		fichier_bouche.write('img n: '+str(compteur)+'; ('+str(x)+','+str(y)+'); '+str(largeur)+'*'+str(hauteur)+'\n')
+		fichier_bouche.flush()
 
 def bouche(image, compteur) :
 	storage = cv.CreateMemStorage()
