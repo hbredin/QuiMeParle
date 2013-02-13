@@ -2,22 +2,26 @@
 import cv
 import cv2
 import sys
+import parle as parle
+
 
 # Initialisation des fichiers a vide.
 fichier_visage = open('visage.txt', 'a')
 fichier_bouche = open('bouche.txt', 'a')
-fichier_video = "VIDEOTEST"
 
 
+# Definition : suivant le booleen visage, va ecrire dans visage.txt ou bouche.txt
 def ecrit_position(visage, compteur, x, y, largeur, hauteur) :
 	# Attention : visage = true si on ecrit dans visage_nomDeLaVideo, sinon bouche_nomDeLaVideo.
 	if visage :
-		fichier_visage.write('img n: '+str(compteur)+'; ('+str(x)+','+str(y)+'); '+str(largeur)+'*'+str(hauteur)+'\n')
+		fichier_visage.write(str(compteur)+' '+str(x)+' '+str(y)+' '+str(largeur)+' '+str(hauteur)+'\n')
 		fichier_visage.flush()
 	else :
-		fichier_bouche.write('img n: '+str(compteur)+'; ('+str(x)+','+str(y)+'); '+str(largeur)+'*'+str(hauteur)+'\n')
+		fichier_bouche.write(str(compteur)+' '+str(x)+' '+str(y)+' '+str(largeur)+' '+str(hauteur)+'\n') 
 		fichier_bouche.flush()
 
+
+# Avec une image, retrouve la position de la bouche, puis fait appel a ecrit_position pour garder la position de la bouche sur l'image numero compteur.
 def bouche(image, compteur) :
 	storage = cv.CreateMemStorage()
 	classifier_face = "haarcascade_frontalface_alt.xml"
@@ -57,26 +61,25 @@ def bouche(image, compteur) :
 			cv.NamedWindow("Mouth")
 			cv.ShowImage("Mouth", img_mouth)
 
-		cv.NamedWindow("Face")
 		cv.ShowImage("Face", image)
+		cv.NamedWindow("Face")
 
 	cv.WaitKey(1)
 
 
+# definition : fait defiler les images une a une d'une video pour travailler dessus.
 def affiche_bouche(video) :
 	compteur_de_frame = 0
-	
-	capture = cv.CreateFileCapture(video)
-	
-	image = cv.QueryFrame(capture)
+	cap = cv.CreateFileCapture(video)
+	image = cv.QueryFrame(cap)
 
-	while True :
-		print cv.GetCaptureProperty(capture, cv.CV_CAP_PROP_FRAME_WIDTH)
+	while image != None :	
+		print str(cv.GetSize(image))+'\n'
 		bouche(image, compteur_de_frame)
 		compteur_de_frame = compteur_de_frame + 1
-		image = cv.QueryFrame(capture)
+		image = cv.QueryFrame(cap)
 		print compteur_de_frame
-		print 'on est dans le while'
+		#print 'on est dans le while'
 
 
 
@@ -85,9 +88,13 @@ if __name__ == '__main__' :
 	fichier_visage.write('Numero Image; (posX, posY); largeur*hauteur\n')
 	fichier_bouche.write('Numero Image; (posX, posY); largeur*hauteur\n')
 	
-	affiche_bouche(fichier_video)
+	affiche_bouche(sys.argv[1])
 	print 'sortie affiche_bouche.'
+
+	fichier_visage.write('end')
+	fichier_bouche.write('end')
 
 	fichier_visage.close()
 	fichier_bouche.close()
-
+	
+	parle.lecture('bouche', cv.CreateFileCapture(sys.argv[1]))
