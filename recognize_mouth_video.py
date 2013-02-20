@@ -1,23 +1,15 @@
 #!/usr/bin/python
-import cv
-import cv2
-import sys
+import cv, cv2, sys, numpy
 import parle as parle
-
-
-# Initialisation des fichiers a vide.
-fichier_visage = open('visage.txt', 'a')
-fichier_bouche = open('bouche.txt', 'a')
-
 
 # Definition : suivant le booleen visage, va ecrire dans visage.txt ou bouche.txt
 def ecrit_position(visage, compteur, x, y, largeur, hauteur) :
 	# Attention : visage = true si on ecrit dans visage_nomDeLaVideo, sinon bouche_nomDeLaVideo.
 	if visage :
-		fichier_visage.write(str(compteur)+' '+str(x)+' '+str(y)+' '+str(largeur)+' '+str(hauteur)+'\n')
+		fichier_visage.write(str(compteur)+' '+str(x)+' '+str(y)+' '+str(largeur)+' '+str(hauteur)+' \n')
 		fichier_visage.flush()
 	else :
-		fichier_bouche.write(str(compteur)+' '+str(x)+' '+str(y)+' '+str(largeur)+' '+str(hauteur)+'\n') 
+		fichier_bouche.write(str(compteur)+' '+str(x)+' '+str(y)+' '+str(largeur)+' '+str(hauteur)+' \n') 
 		fichier_bouche.flush()
 
 
@@ -56,8 +48,8 @@ def bouche(image, compteur) :
 			for ((x,y,l,h), neigh) in mouths:
 				# Image detectee -> sauvegarde position :
 				ecrit_position(False, compteur, x, y, l, h)
-
 				cv.Rectangle(img_mouth, (x,y), (x+l,y+h), (0,0,255))
+
 			cv.NamedWindow("Mouth")
 			cv.ShowImage("Mouth", img_mouth)
 
@@ -73,10 +65,11 @@ def affiche_bouche(video) :
 	cap = cv.CreateFileCapture(video)
 	image = cv.QueryFrame(cap)
 
-	while image != None :	
-		print str(cv.GetSize(image))+'\n'
+	while image != None :
+		#print str(cv.GetSize(image))+'\n'
 		bouche(image, compteur_de_frame)
-		compteur_de_frame = compteur_de_frame + 1
+		compteur_de_frame += 1
+		# Image suivante.
 		image = cv.QueryFrame(cap)
 		print compteur_de_frame
 		#print 'on est dans le while'
@@ -84,12 +77,28 @@ def affiche_bouche(video) :
 
 
 if __name__ == '__main__' :
-	print 'on entre dans le main..!'
-	fichier_visage.write('Numero Image; (posX, posY); largeur*hauteur\n')
-	fichier_bouche.write('Numero Image; (posX, posY); largeur*hauteur\n')
+	print 'Debut : main...'
+	# Variables de parle.py, utile pour l'appel de la fonction pixel_parle
+	moyenne = 0.0
+	compt_m = 0
 	
+	# Initialisation des fichiers texte.
+	# /!\ le sys.argv[1] est du type : 'dossier/name.avi'
+	name = sys.argv[1].split('.')[0].split('/')[1]
+	fichier_visage = open('placement_visage/'+name+'_visage.txt', 'w')
+	fichier_bouche = open('placement_bouche/'+name+'_bouche.txt', 'w')
+	
+	fichier_visage.write('Numero_image posX posY largeur hauteur\n')
+	fichier_bouche.write('Numero_image posX posY largeur hauteur\n')
+	fichier_visage.close()
+	fichier_bouche.close()
+
+	fichier_visage = open('placement_visage/'+name+'_visage.txt', 'a')
+	fichier_bouche = open('placement_bouche/'+name+'_bouche.txt', 'a')
+	
+	print '\tDebut : affiche_bouche...'
 	affiche_bouche(sys.argv[1])
-	print 'sortie affiche_bouche.'
+	print '\t...Fin : affiche_bouche.'
 
 	fichier_visage.write('end')
 	fichier_bouche.write('end')
@@ -97,4 +106,11 @@ if __name__ == '__main__' :
 	fichier_visage.close()
 	fichier_bouche.close()
 	
-	parle.lecture('bouche', cv.CreateFileCapture(sys.argv[1]))
+	print '\tDebut : lecture...'
+	ens_moyenne = []
+	parle.lecture('placement_bouche/'+name+'_bouche.txt', cv.CreateFileCapture(sys.argv[1]), ens_moyenne)
+	print '\t...Fin : lecture'
+	print "###\n\n"
+	print str(ens_moyenne)+"\n\n"
+	print "###\n"
+	print '...Fin : main'

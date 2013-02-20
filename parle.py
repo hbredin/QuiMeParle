@@ -1,75 +1,79 @@
-import cv
-import sys
+import cv, cv2, sys
 
-# DANS L'ETAT ACTUEL, IL N'Y A QU'UNE MOYENNE DES COULEURS DES PIXELS. IL FAUDRAIT DETERMINER SI MOYENNE BAISSE BEAUCOUP AU FUR ET A MESURE.
-
-moyenne = 0.0
-compt_m = 0
-
-
-def pixel_parle(bouche) :
-    # r , g ou b proche de 0 => noir
-    r = -1
-    g = -1
-    b = -1
-    l, h = cv.GetSize(bouche)
+# Pour une image donnee, va sommer la nuance grise des pixels pour en faire une moyenne.
+# bouche = image
+# moyenne = [Moyenne, Compteur_moyenne]
+def pixel_parle(bouche, moyenne) :
+    moy = 0
+    h, l = cv.GetSize(bouche)
 
     for i in range(l) :
         for j in range(h) :
-            r,g,b = bouche[i,j]
-            moyenne += r + g + b
-            compt_moy += 3
-            print str(bouche[i,j])+'\n'
+            #print 'i,j : '+str(i)+','+str(j)
+            #print str(range(l))+' '+str(range(h))
+            #print str(bouche[i,j])
+            moy += bouche[i,j]
     
-    # resultat moyen du pixel.
-    moy /= compt_moy
-    # Il ne reste plus qu'une valeur dans la moyenne
-    compt_moy = 1
+    # resultat moyen du pixel. nombre_de_pixel = l*h
+    moyenne.append(moy / (l*h))
+    #print "#########################################\n"
+    #for v in range(len(moyenne)) :
+      #  print moyenne[i]+"\n"
 
 
 
 
-def lecture(fichier, capture) :
-    print '\tdebut lecture...\n'
-    # Premiere image de la capture et initialisation des variables.
-    image = cv.QueryFrame(capture)
+def lecture(fichier, capture, moyenne) :
+    # Premiere image de la capture et initialisation des variables temporaires.
+    img = cv.QueryFrame(capture)
     numero_img = -1
     x = -1
     y = -1
     largeur = -1
     hauteur = -1
-    i = 0
+    mot = ''
     
-    fich = open(fichier+'.txt', 'r')
-    # Tout le fichier est dans ligne sous forme d'un string.
-    ligne = fich.read()
-    # lignes = tableau des valeurs qui s'enchainent : numero img, x, y, larg, haut.
-    lignes = ligne.split(' ')
-    
-    while lignes[i] != 'end' :
+    f = open(fichier, 'r')
+    # readline() + readline() car on ne prend pas en compte la ligne de commentaire de bouche.txt
+    f.readline()
+
+    mot = f.readline().split(' ')
+
+    print "\t\t...Debut fichier bouche.txt\n"
+    while mot[0] != 'end' :
+        # 8 => 2^8 ?   ||   1 = nombre de canaux couleur ouverts => only gray. (3=RGB)...
+        dest_img = cv.CreateImage(cv.GetSize(img), 8, 1)
+        cv.CvtColor(img, dest_img, cv2.COLOR_BGR2GRAY)
+
         # Recupere les valeurs d'une ligne.
-        # str(compteur)+' '+str(x)+' '+str(y)+' '+str(largeur)+' '+str(hauteur)+'\n'
-        numero_img = int(lignes[i])
-        x = int(lignes[i+1])
-        y = int(lignes[i+2])
-        largeur = int(lignes[i+3])
-        hauteur = int(lignes[i+4])
+        numero_img = int(mot[0])
+        x = int(mot[1])
+        y = int(mot[2])
+        largeur = int(mot[3])
+        # Petite feinte : il faut enlever le \n restant grace a rstrip.
+        hauteur = int(mot[4].rstrip('\n'))
         
         # Parmis l'image, on recupere la bouche.
-        bouche = cv.GetSubRect(image, (x,y,largeur,hauteur))
+        bouche = cv.GetSubRect(dest_img, (x,y,largeur,hauteur))
         # Parle ou pas ? fonction qui va servir a determiner si c'est good ou pas, selon peut etre des variables globales (precedente img)
-        pixel_parle(bouche)
+        pixel_parle(bouche, moyenne)
 
-        # Passe a l'image et ligne suivante.
-        image = cv.QueryFrame(capture)
-        i = i + 5
-
-    print '\t...fin lecture\n'
-
+        # Si la ligne suivante correspond a la meme frame, on reboucle sur la meme image.
+        mot = f.readline().split(' ')
+        
+        try : 
+            if int(mot[0]) != numero_img :
+                # Passe a l'image.
+                img = cv.QueryFrame(capture)
+        except ValueError : 
+            print "\t\t...Fin fichier bouche.txt\n"
+            
+        
 
 
 if __name__ == '__main__' :
     # Recupere la video et la passe en parametre
     print 'Debut...\n'
-    lecture('bouche', cv.CreateFileCapture(sys.argv[1]))
+    moyenne = []
+    lecture('bouche.txt', cv.CreateFileCapture(sys.argv[1]), moyenne)
     print '...Fin\n'
