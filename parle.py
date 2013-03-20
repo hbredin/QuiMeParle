@@ -1,29 +1,6 @@
-import cv, cv2, sys
+import cv, cv2, sys, numpy
 
-# Pour une image donnee, va sommer la nuance grise des pixels pour en faire une moyenne.
-# bouche = image
-# moyenne = [Moyenne, Compteur_moyenne]
-def pixel_parle(bouche, moyenne) :
-    moy = 0
-    h, l = cv.GetSize(bouche)
-
-    for i in range(l) :
-        for j in range(h) :
-            #print 'i,j : '+str(i)+','+str(j)
-            #print str(range(l))+' '+str(range(h))
-            #print str(bouche[i,j])
-            moy += bouche[i,j]
-    
-    # resultat moyen du pixel. nombre_de_pixel = l*h
-    moyenne.append(moy / (l*h))
-    #print "#########################################\n"
-    #for v in range(len(moyenne)) :
-      #  print moyenne[i]+"\n"
-
-
-
-
-def lecture(fichier, capture, moyenne) :
+def rgb_to_gray(name, capture, liste_des_bouches) :
     # Premiere image de la capture et initialisation des variables temporaires.
     img = cv.QueryFrame(capture)
     numero_img = -1
@@ -32,8 +9,9 @@ def lecture(fichier, capture, moyenne) :
     largeur = -1
     hauteur = -1
     mot = ''
+    moyenne = []
     
-    f = open(fichier, 'r')
+    f = open('placement_bouche/'+name+'_bouche.txt', 'r')
     # readline() + readline() car on ne prend pas en compte la ligne de commentaire de bouche.txt
     f.readline()
 
@@ -53,22 +31,29 @@ def lecture(fichier, capture, moyenne) :
         # Petite feinte : il faut enlever le \n restant grace a rstrip.
         hauteur = int(mot[4].rstrip('\n'))
         
-        # Parmis l'image, on recupere la bouche.
+        # Parmis l'image, on recupere la bouche, en niveau de gris
         bouche = cv.GetSubRect(dest_img, (x,y,largeur,hauteur))
-        # Parle ou pas ? fonction qui va servir a determiner si c'est good ou pas, selon peut etre des variables globales (precedente img)
-        pixel_parle(bouche, moyenne)
 
+        liste_des_bouches.append(bouche)
         # Si la ligne suivante correspond a la meme frame, on reboucle sur la meme image.
         mot = f.readline().split(' ')
         
         try : 
             if int(mot[0]) != numero_img :
-                # Passe a l'image.
+                # Passe a l'image suivante.
                 img = cv.QueryFrame(capture)
         except ValueError : 
             print "\t\t...Fin fichier bouche.txt\n"
             
         
+    #Pour Pierre : ecriture dans un fichier des sommes des pixels en hauteur de gris.
+    numpy.savetxt('donneesFormat/'+name+'.datV', moyenne)
+
+
+
+
+
+
 
 
 if __name__ == '__main__' :
