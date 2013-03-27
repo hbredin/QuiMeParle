@@ -77,13 +77,11 @@ def transform1Darray(fichier):
 	return result 
 	 
 
-#Fonction qui calcule la correlation entre 2 1D array, en fonction des 2 fichier donnés en entrées		
+#Fonction qui calcule la correlation entre 2 1D array, en fonction des 2 fichiers donnés en entrées	et retourne le terme non diagonale ( correlation réelle )	
 def getCorrelation(fileUn,fileDeux):
-
 	f1 = transform1Darray(fileUn)
 	f2 = transform1Darray(fileDeux)
 	coef = np.corrcoef(f1,f2)
-
 	return coef[0][1]
 
 #Fonction de calcul de chaque correlation pour les noms de fichiers listés dans un fichier index
@@ -95,20 +93,30 @@ def calcCorrelationTwo(fileIndex):
 		words = line.strip().split(' ')
 		listVideoFile.append(words[0])
 		listAudioFile.append(words[1])
+
 	x = 0
-	y = 0
 
 	for x in range(len(listVideoFile)):
 		fileVideoPath =  DATA_FORMAT_FILE + sep + str(listVideoFile[x]) + ext_datV
 		fileAudioPath =  DATA_FORMAT_FILE + sep + str(listAudioFile[x]) + ext_datA
-		getCorrelation(fileVideoPath, fileAudioPath)
+		correlation = getCorrelation(fileVideoPath, fileAudioPath)
+		ecrireFileResult(listVideoFile[x],listAudioFile[x],correlation)
 		x = x +1
-				
+	
+
+def ecrireFileResult(entree1,entree2,correlation):
+	fichier = open("resultatCorrelation.txt","w")
+	fichier.write(entree1+" "+entree2+" "+correlation)
+	fichier.close()
+	
+
+	
 #Main
 fichier1 = DATA_FORMAT_FILE+sep+"aarmorpdhm.datA"
 fichier2 = DATA_FORMAT_FILE+sep+"agjwdtuzcz.datA"
 fichier11 = "test1.txt"
 fichier22 = "test2.txt"
+
 
 #print transform1Darray(fichier11)
 #print "-------------------------"
@@ -116,4 +124,5 @@ fichier22 = "test2.txt"
 #print getCorrelation(fichier1,fichier2)
 #print getCorrelation(fichier1,fichier2)
 #calcCorrelationTwo(file_f)
-traitementAudioVideo(file_f,'Energy')
+#ecrireFileResult("entree1","entree2","correlation")
+#traitementAudioVideo(file_f,'Energy')
