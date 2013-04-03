@@ -5,7 +5,7 @@ import yaafelib as yaafe
 import matplotlib.pyplot as plt
 import numpy as np
 import codecs
-import os
+import os as oss
 
 #Variables de chemins
 sep ="/"
@@ -14,6 +14,7 @@ Pos_file ="train.positive.txt"
 TRUTH_PATH = "../Data/Truth/AV"
 DATA_FILE = "../Data/donnees"
 DATA_FORMAT_FILE = "../Data/donneesFormat"
+
 
 #Variables d'extensions
 ext_wav = ".wav"
@@ -76,24 +77,74 @@ def transform1Darray(fichier):
 
 	return result 
 	 
+#Fonction qui permet d'uniformiser les informations si 2 set de données ne sont pas de longueurs égales ( correlation erronnée )
+
+def uniformData(array1,array2):
+	t1 = len(array1)
+	t2 = len(array2)
+	arrayResV = array1
+	x = t2 -t1
+	y = 0
+
+	if x == 0:
+		print "Guut"	
+
+	else:
+		if x > 0:
+			for y in range(x):
+				arrayResV.append(array1[len(array1) - 1])
+				y = y+1
+			return arrayResV
+		else:
+			if x < 0:
+				for y in range(abs(x)):
+					arrayResV.pop()
+				y = y+1
+			return arrayResV
+
+
 
 #Fonction qui calcule la correlation entre 2 1D array, en fonction des 2 fichiers donnés en entrées	et retourne le terme non diagonale ( correlation réelle )	
-def getCorrelation(fileUn,fileDeux):
-	f1 = transform1Darray(fileUn)
-	f2 = transform1Darray(fileDeux)
-	coef = np.corrcoef(f1,f2)
+
+def getCorrelation(fileV,fileA):
+	f1V = transform1Darray(fileV)
+	f2A = transform1Darray(fileA)
+	f3V = uniformData(f1V,f2A)
+	coef = np.corrcoef(f3V,f2A)
+
+	"""plt.subplot(2,1,1)
+	plt.plot(f3V)
+	plt.subplot(2,1,2)
+	plt.plot(f2A)
+	plt.title(coef)
+	plt.show()"""
+
 	return coef[0][1]
+
+#fonction de creation de l'index generale de tous les fichiers
+def createIndex(dossier):
+	liste1 =  oss.listdir(dossier)
+	fichier = open("indexDonneesFormat.txt","w")
+	for name in liste1:	
+		fichier.write(name+"\n")
+	fichier.close()
 
 #Fonction de calcul de chaque correlation pour les noms de fichiers listés dans un fichier index
 #TODO
 def calcCorrelationTwo(fileIndex):
 	listVideoFile = []
 	listAudioFile = []
-	for line in fileIndex:
-		words = line.strip().split(' ')
-		listVideoFile.append(words[0])
-		listAudioFile.append(words[1])
 
+	for line in fileIndex:
+		
+		print line
+		"""if words[1] == "datA":
+			listAudioFile.append(words[0]+'.'+words[1])
+		else:
+			if words[1] == "datV":
+				listVideoFile.append(words[0]+'.'+words[1])
+	print listVideoFile
+		
 	x = 0
 
 	for x in range(len(listVideoFile)):
@@ -102,8 +153,8 @@ def calcCorrelationTwo(fileIndex):
 		correlation = getCorrelation(fileVideoPath, fileAudioPath)
 		ecrireFileResult(listVideoFile[x],listAudioFile[x],correlation)
 		x = x +1
-	
-
+	"""
+#Fonction d'ecriture de resultat dans un fichier resultatCorrelation.txt pour chaque paire de fichier
 def ecrireFileResult(entree1,entree2,correlation):
 	fichier = open("resultatCorrelation.txt","w")
 	fichier.write(entree1+" "+entree2+" "+correlation)
@@ -112,8 +163,26 @@ def ecrireFileResult(entree1,entree2,correlation):
 
 	
 #Main
-fichier1 = DATA_FORMAT_FILE+sep+"aarmorpdhm.datA"
-fichier2 = DATA_FORMAT_FILE+sep+"agjwdtuzcz.datA"
+
+#correlation -0,04 sensé etre bon
+fichierVideo = DATA_FORMAT_FILE+sep+"aangbijhbc.datV"
+fichierAudio = DATA_FORMAT_FILE+sep+"nebihbjxme.datA"
+
+"""#correlation 0.06 sensé etre bon
+fichierVideo1 = DATA_FORMAT_FILE+sep+"aiihtbrtzi.datV"
+fichierAudio1 = DATA_FORMAT_FILE+sep+"ilfyualqlf.datA"
+#correlation -0,08 sensé etre faux
+fichierVideo2 = DATA_FORMAT_FILE+sep+"aiihtbrtzi.datV"
+fichierAudio2 = DATA_FORMAT_FILE+sep+"kzctcfgrar.datA"
+#correlation  sensé etre faux
+fichierVideo3 = DATA_FORMAT_FILE+sep+"aangbijhbc.datV"
+fichierAudio3 = DATA_FORMAT_FILE+sep+"kzctcfgrar.datA"
+"""
+createIndex(DATA_FORMAT_FILE)
+
+calcCorrelationTwo("resultatCorrelation.txt")
+#print(oss.listdir(DATA_FORMAT_FILE))
+
 fichier11 = "test1.txt"
 fichier22 = "test2.txt"
 
@@ -121,7 +190,15 @@ fichier22 = "test2.txt"
 #print transform1Darray(fichier11)
 #print "-------------------------"
 #print transform1Darray(fichier2)
-#print getCorrelation(fichier1,fichier2)
+#print getCorrelation(fichierVideo,fichierAudio)
+
+"""print "-------------------------"
+print getCorrelation(fichierVideo1,fichierAudio1)
+print "-------------------------"
+print getCorrelation(fichierVideo2,fichierAudio2)
+print "-------------------------"
+print getCorrelation(fichierVideo3,fichierAudio3)"""
+
 #print getCorrelation(fichier1,fichier2)
 #calcCorrelationTwo(file_f)
 #ecrireFileResult("entree1","entree2","correlation")
